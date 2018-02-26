@@ -1,0 +1,56 @@
+
+
+
+.c-view {
+    position: relative;
+    width: 800px;
+    margin: 20px auto;
+    padding: 20px;
+    .clearfix;
+    .people-list {
+        width: 200px;
+        margin-right: 10px;
+        float: left;
+        .list {
+            width: 100%;
+            min-height: 100px;
+            max-height: 300px;
+            border: 1px solid #cccccc;
+            overflow-x: hidden;
+            overflow-y: auto;
+            .list-item {
+                padding: 10px;
+                cursor: move;
+            }
+        }
+        .fenpei {
+            margin-top: 20px;
+        }
+    }
+    .huichang {
+        overflow: hidden;
+        position: relative;
+        .tools {
+            margin-bottom: 15px;
+        }
+        .zuowei {
+            position: relative;
+            .ybseat-item {
+                text-align: center;
+                border: 1px solid #CDCDCD;
+            }
+            .list-item {
+                position: absolute;
+                top: 0px;
+                bottom: 0px;
+                background-color: #60ff6a;
+            }
+        }
+    }
+}
+
+.search {
+    cursor: pointer;
+    pointer-events: all;
+    z-index: 99;
+}

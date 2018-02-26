@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>index</title>
+    <% include ./tpl/head.ejs %>
+</head>
+<body>
+<div class="c-view">
+    <div class="people-list">
+        <!--<form>-->
+            <!--<div class="form-group has-feedback">-->
+                <!--<input class="form-control" id="people"/>-->
+                <!--<div class="form-control-feedback search">-->
+                    <!--<img src="../img/icon-search.png"/>-->
+                <!--</div>-->
+            <!--</div>-->
+        <!--</form>-->
+        <div class="list">
+        
+        </div>
+        <a class="btn btn-primary fenpei" onclick="random()">随机分配</a>
+        <a class="btn btn-primary fenpei" onclick="cancelSeat()">全部撤销</a>
+    </div>
+    <div class="huichang">
+        <div class="tools">
+            <form class="form-inline">
+                <div class="form-group">
+                    <label>行数</label>
+                    <input class="form-control" id="row" onkeyup="checkNum(this)"/>
+                </div>
+                <div class="form-group">
+                    <label>列数</label>
+                    <input class="form-control" id="col" onkeyup="checkNum(this)"/>
+                </div>
+                <a class="btn btn-primary" onclick="addSeat()">添加表格</a>
+            </form>
+        </div>
+        <div class="zuowei" id="zuowei">
+        
+        </div>
+    </div>
+</div>
+
+<script type="text/javascript" src="../js/lib/jquery.js"></script>
+<script type="text/javascript" src="../js/lib/Sortable.js"></script>
+<script type="text/javascript" src="../js/seat.js"></script>
+<script>
+  var seat = null;
+  var people_list = [{id: 1, name: '毛泽东'}, {id: 2, name: '周恩来'}, {id: 3, name: '邓小平'},
+      {id: 4, name: '马克思'}, {id: 5, name: '成吉思汗'}, {id: 6, name: '李世民'},
+      {id: 7, name: '亚历山大'}, {id: 8, name: '列宁'}, {id: 9, name: '斯大林'},
+      {id: 10, name: '拿破仑'}, {id: 11, name: '路易十四'}, {id: 12, name: '林肯'}]
+  $(function () {
+    initPeople(people_list);
+    Sortable.create($('.list')[0], {
+      group: {
+        name: 'people',
+        put: ['zuowei']
+      },
+      sort: false,
+      onAdd: function(e) {
+        var seatId = $(e.from).attr('id');
+        seat.setData([{seatId: seatId, name: ''}]);
+        seat.refresh(false);
+      },
+      onEnd: function (e) {
+        var toList = $(e.to).find('.list-item');
+        var toId = $(e.to).attr('id');
+        if (toList.length > 1) {
+          var toElm = toList[0];
+          var fromName = toList[1].innerHTML;
+          if(seat) seat.setData([{seatId: toId, name: fromName}]);
+          $(e.from).append(toElm);
+        }
+      }
+    });
+  })
+
+  function addSeat() {
+    var row = $('#row').val() ? $('#row').val() : 0;
+    var col = $('#col').val() ? $('#col').val() : 0;
+    var size = row * col;
+    var boo = true;
+    if(size < people_list.length ) {
+      boo = confirm('座位少于人数，是否确认创建？');
+    }
+    if(boo) {
+      seat = new YBSeat('#zuowei', {
+        row: row, col: col,
+        onclick: function (e) {
+          console.log(e);
+        },
+        onselected: function () {
+          console.log('选择')
+        },
+        cancelselected: function () {
+          console.log('取消选择')
+        }
+      })
+      $('.ybseat-item').each(function (index, el) {
+        Sortable.create(el, {
+          group: {
+            name: 'zuowei',
+            put: ['people', 'zuowei']
+          },
+          onMove: function (e) {
+            if (!$(e.dragged).hasClass('list-item')) {
+              return false;
+            }
+          },
+          onAdd: function (e) {
+            var fromId = $(e.from).attr('id');
+            var toId = $(e.to).attr('id');
+            if (fromId) {
+              var toList = $(e.to).find('.list-item');
+              if (toList.length > 1) {
+                var toElm = toList[0];
+                var fromElm = toList[1];
+                var toName = toElm.innerHTML;
+                var fromName = fromElm.innerHTML;
+                seat.setData([{seatId: fromId, name: toName}]);
+                seat.setData([{seatId: toId, name: fromName}]);
+                $(e.from).append(toElm);
+              } else if (toList.length > 0) {
+                toName = $(e.to).find('.list-item')[0].innerHTML;
+                seat.setData([{seatId: fromId, name: ''}]);
+                seat.setData([{seatId: toId, name: toName}]);
+              }
+            } else {
+              var toName = $(e.to).find('.list-item')[0].innerHTML;
+              seat.setData([{seatId: toId, name: toName}]);
+            }
+          },
+          onEnd: function (e) {
+            console.log(seat.getData())
+          }
+        })
+      })
+      cancelAll();
+    }
+  }
+
+  function initPeople(plist) {
+    var htmlStr = [];
+    for(var i=0;i<plist.length;i++) {
+      htmlStr.push('<div class="list-item">'+plist[i].name+'</div>');
+    }
+    $('.list').html(htmlStr.join(''));
+  }
+  function checkNum(e) {
+    if (e.value.length == 1) {
+      e.value = e.value.replace(/[^1-9]/g, '')
+    } else {
+      e.value = e.value.replace(/\D/g, '')
+    }
+  }
+
+  function random() {
+    if ($('.ybseat-item').length) {
+      var list = [], result = [];
+      $('.ybseat-item').each(function (index, el) {
+        list.push($(el).attr('id'))
+      })
+      var len = list.length;
+      // 获取随机位置
+      while (len > 0) {
+        var r = Math.ceil(Math.random() * list.length) - 1;
+        var result_item = list.splice(r, 1);
+        result.push(result_item[0]);
+        len--;
+      }
+      // 分配位置
+      seat.clearData();
+      seat.refresh(false);
+      var plist = [];
+      if( result.length < people_list.length) {
+        plist = people_list.slice(result.length);
+      }
+      initPeople(plist);
+      for (var i = 0; i < result.length; i++) {
+        var s = result[i];
+        if(i < people_list.length) {
+          var clone = people_list[i];
+          seat.setData([{seatId: s, name: clone.name}])
+        }
+      }
+      seat.refresh(false);
+    }else {
+      alert('先创建座位!')
+    }
+  }
+  function cancelSeat() {
+    cancelAll()
+  }
+  function cancelAll() {
+    seat.clearData();
+    seat.refresh(false);
+    initPeople(people_list);
+  }
+</script>
+</body>
+</html>
